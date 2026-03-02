@@ -1,0 +1,5 @@
+{
+  "name": "No Login: GenAI Workspace And Admin Dashboard",
+  "description": "A dashboard for managing and accessing Generative AI tools with real-time metrics.",
+  "requestFramePermissions": []
+}
