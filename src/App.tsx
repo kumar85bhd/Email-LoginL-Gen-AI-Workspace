@@ -7,13 +7,14 @@ import { useAuth } from './shared/context/useAuth';
 import WorkspaceModule from './modules/workspace/WorkspaceModule';
 import AdminModule from './modules/admin/AdminModule';
 import Layout from './components/Layout';
-import Login from './pages/Login';
 import LoggedOut from './pages/LoggedOut';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    // If not authenticated, AuthContext will handle redirect to SSO
+    // But we can render null or a loading state here
+    return null;
   }
   return <>{children}</>;
 };
@@ -27,11 +28,8 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AppRoutes = () => {
-  const { isAuthenticated } = useAuth();
-
   return (
     <Routes>
-      <Route path="/login" element={isAuthenticated ? <Navigate to="/workspace" replace /> : <Login />} />
       <Route path="/logged-out" element={<LoggedOut />} />
       <Route 
         path="/workspace/*" 

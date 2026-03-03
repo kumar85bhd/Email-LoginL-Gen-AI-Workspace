@@ -39,7 +39,7 @@ const WorkspaceModule: React.FC = () => {
       sessionStorage.setItem('splashShown', 'true');
       const timer = setTimeout(() => {
         setShowSplash(false);
-      }, 1500);
+      }, 800);
       return () => clearTimeout(timer);
     }
   }, [showSplash]);

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -6,6 +6,8 @@ import os
 import logging
 import time
 import traceback
+import json
+from backend.src.auth_mgn.auth_validate import validate_token, load_public_key
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +19,7 @@ try:
     from backend.models.user import User
     from backend.models.category import Category
     from backend.models.workspace_app import WorkspaceApp
-    from backend.routes import auth, admin, workspace
+    from backend.routes import admin, workspace
     from backend.core.config import BASE_DIR
 except Exception as e:
     logger.error(f"❌ Error during imports: {e}")
@@ -26,9 +28,61 @@ except Exception as e:
 
 app = FastAPI()
 
+ADMIN_USER_PATH = os.path.join(BASE_DIR, "admin_user.json")
+
+# Lightweight Session Middleware
+@app.middleware("http")
+async def require_email_header(request: Request, call_next):
+    # Exclude public routes
+    if request.url.path in ["/api/authenticate", "/api/health"] or request.url.path.startswith("/assets") or request.url.path == "/":
+         return await call_next(request)
+    
+    # Only enforce on API routes
+    if request.url.path.startswith("/api/workspace") or request.url.path.startswith("/api/admin"):
+        user_email = request.headers.get("X-User-Email")
+        if not user_email:
+            return JSONResponse(status_code=401, content={"detail": "Not authenticated"})
+            
+    return await call_next(request)
+
+@app.get("/api/authenticate")
+async def authenticate(token: str):
+    try:
+        payload = validate_token(token)
+        email = payload.get("email")
+        name = payload.get("name")
+        
+        if not email:
+            raise HTTPException(status_code=400, detail="Email not found in token")
+            
+        is_admin = False
+        if os.path.exists(ADMIN_USER_PATH):
+            try:
+                with open(ADMIN_USER_PATH, "r") as f:
+                    admin_emails = json.load(f)
+                    if email in admin_emails:
+                        is_admin = True
+            except Exception as e:
+                logger.error(f"Error reading admin_user.json: {e}")
+        
+        return {"email": email, "isAdmin": is_admin, "name": name}
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception as e:
+        logger.error(f"Authentication error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
 @app.on_event("startup")
 async def startup_event():
     logger.info("🚀 FastAPI server starting up...")
+    
+    # Cache public key
+    try:
+        load_public_key()
+        logger.info("✅ Public key cached successfully.")
+    except Exception as e:
+        logger.warning(f"⚠️ Could not cache public key (might be mock mode): {e}")
+
     logger.info(f"CWD: {os.getcwd()}")
     logger.info(f"BASE_DIR: {BASE_DIR}")
     
@@ -40,13 +94,11 @@ async def startup_event():
         
         # Seed data
         from backend.database import SessionLocal
-        from backend.services.user_service import seed_users
         from backend.services.category_service import seed_categories
         from backend.services.workspace_app_service import seed_apps
         
         db = SessionLocal()
         try:
-            seed_users(db)
             seed_categories(db)
             seed_apps(db)
         finally:
@@ -86,7 +138,6 @@ app.add_middleware(
 )
 
 # API Routes
-app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(admin.router, prefix="/api/admin", tags=["admin"])
 app.include_router(workspace.router, prefix="/api/workspace", tags=["workspace"])
 

@@ -1,32 +1,42 @@
 import { AppData, AppMetric } from '../types';
 
+const getAuthHeaders = () => {
+  const email = sessionStorage.getItem('email');
+  if (!email) {
+      throw new Error("No active session: Missing user email");
+  }
+  return {
+    'Content-Type': 'application/json',
+    'X-User-Email': email
+  };
+};
+
 /**
  * API service for handling backend interactions.
  */
 export const api = {
   /**
-   * Identifies a user by email and retrieves their admin status.
-   * @param email - The user's email address.
-   * @returns A promise resolving to the identity data or null if identification fails.
+   * Authenticates a user via SSO token.
+   * @param token - The SSO token.
+   * @returns A promise resolving to the user data.
    */
-  identify: async (email: string): Promise<{email: string, isAdmin: boolean} | null> => {
+  authenticate: async (token: string): Promise<{email: string, isAdmin: boolean, name: string}> => {
     try {
-      const res = await fetch('/api/identify', {
-        method: 'POST',
+      const res = await fetch(`/api/authenticate?token=${encodeURIComponent(token)}`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
       });
       
       if (res.ok) {
         return res.json();
       } else {
         const errorData = await res.json().catch(() => ({ detail: 'Unknown error' }));
-        throw new Error(errorData.detail || `Identification failed with status ${res.status}`);
+        throw new Error(errorData.detail || `Authentication failed with status ${res.status}`);
       }
     } catch (error: any) {
-      console.error('Identification error:', error);
+      console.error('Authentication error:', error);
       throw error;
     }
   },
@@ -45,11 +55,8 @@ export const api = {
    */
   getApps: async (): Promise<{ data: AppData[], isLive: boolean }> => {
     try {
-      const email = sessionStorage.getItem('email');
       const res = await fetch('/api/workspace/apps', {
-        headers: {
-          'X-User-Email': email || ''
-        }
+        headers: getAuthHeaders()
       });
       if (res.ok) {
         const data = await res.json();
@@ -68,11 +75,8 @@ export const api = {
    */
   getCategories: async (): Promise<any[]> => {
     try {
-      const email = sessionStorage.getItem('email');
       const res = await fetch('/api/workspace/categories', {
-        headers: {
-          'X-User-Email': email || ''
-        }
+        headers: getAuthHeaders()
       });
       if (res.ok) {
         return await res.json();
@@ -132,12 +136,9 @@ export const api = {
    */
   launchApp: async (id: number): Promise<void> => {
     try {
-      const email = sessionStorage.getItem('email');
       await fetch(`/api/workspace/apps/${id}/launch`, {
         method: 'POST',
-        headers: {
-          'X-User-Email': email || ''
-        }
+        headers: getAuthHeaders()
       });
     } catch (error) {
       console.error('Failed to record app launch', error);

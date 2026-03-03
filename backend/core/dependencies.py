@@ -1,16 +1,12 @@
 import logging
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError, jwt
-from sqlalchemy.orm import Session
-from backend.core.config import settings
+import json
+import os
+from fastapi import Header, HTTPException, status
 from backend.database import SessionLocal
-from backend.services.user_service import get_user_by_email
-from backend.schemas.user import UserInDB
 
 logger = logging.getLogger(__name__)
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+ADMIN_USER_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "admin_user.json")
 
 def get_db():
     db = SessionLocal()
@@ -19,33 +15,34 @@ def get_db():
     finally:
         db.close()
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            logger.warning("Token payload missing 'sub' claim")
-            raise credentials_exception
-    except JWTError as e:
-        logger.warning(f"JWT Decode Error: {e}")
-        raise credentials_exception
-    
-    user = get_user_by_email(db=db, email=email)
-    if user is None:
-        logger.warning(f"User not found in database for email: {email}")
-        raise credentials_exception
-    
-    return user
+def get_current_user(x_user_email: str = Header(None, alias="X-User-Email")):
+    if not x_user_email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not identified"
+        )
+    return {"email": x_user_email}
 
-def get_current_admin_user(current_user: UserInDB = Depends(get_current_user)):
-    if not current_user.is_admin:
+def get_current_admin_user(x_user_email: str = Header(None, alias="X-User-Email")):
+    if not x_user_email:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not identified"
+        )
+    
+    is_admin = False
+    try:
+        if os.path.exists(ADMIN_USER_PATH):
+            with open(ADMIN_USER_PATH, "r") as f:
+                admin_emails = json.load(f)
+                if x_user_email in admin_emails:
+                    is_admin = True
+    except Exception as e:
+        logger.error(f"Error reading admin_user.json: {e}")
+        
+    if not is_admin:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user doesn't have enough privileges"
         )
-    return current_user
+    return {"email": x_user_email, "is_admin": True}

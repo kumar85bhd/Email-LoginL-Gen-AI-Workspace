@@ -1,9 +1,7 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 const LoggedOut: React.FC = () => {
-  const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background text-foreground relative overflow-hidden">
@@ -26,7 +24,15 @@ const LoggedOut: React.FC = () => {
         <p className="text-muted-foreground mb-8">Thank you for using the workspace. Have a great day!</p>
         
         <button 
-          onClick={() => navigate('/login')}
+          onClick={() => {
+            const ssoUrl = import.meta.env.VITE_SSO_URL;
+            if (ssoUrl) {
+              window.location.href = ssoUrl;
+            } else {
+              // Fallback or error if SSO URL is not set
+              console.error("SSO URL not configured");
+            }
+          }}
           className="w-full py-3 px-4 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-xl transition-colors shadow-lg shadow-primary/25"
         >
           Sign in again

@@ -1,9 +1,8 @@
 import json
-from typing import List
+from typing import List, Dict
 from uuid import uuid4, UUID
 from fastapi import APIRouter, Depends, HTTPException
 from backend.core.dependencies import get_current_admin_user
-from backend.schemas.user import UserInDB
 
 router = APIRouter()
 
@@ -23,13 +22,13 @@ def write_admin_config(config):
         json.dump(config, f, indent=2)
 
 @router.get("/dashboard-links")
-def get_dashboard_links(current_user: UserInDB = Depends(get_current_admin_user)):
+def get_dashboard_links(current_user: Dict = Depends(get_current_admin_user)):
     """Retrieve all admin dashboard links."""
     config = read_admin_config()
     return config.get("dashboard_links", [])
 
 @router.post("/dashboard-links")
-def create_dashboard_link(link: dict, current_user: UserInDB = Depends(get_current_admin_user)):
+def create_dashboard_link(link: dict, current_user: Dict = Depends(get_current_admin_user)):
     """Create a new admin dashboard link."""
     config = read_admin_config()
     links = config.get("dashboard_links", [])
@@ -40,7 +39,7 @@ def create_dashboard_link(link: dict, current_user: UserInDB = Depends(get_curre
     return link
 
 @router.put("/dashboard-links/{link_id}")
-def update_dashboard_link(link_id: UUID, link_data: dict, current_user: UserInDB = Depends(get_current_admin_user)):
+def update_dashboard_link(link_id: UUID, link_data: dict, current_user: Dict = Depends(get_current_admin_user)):
     """Update an existing admin dashboard link."""
     config = read_admin_config()
     links = config.get("dashboard_links", [])
@@ -54,7 +53,7 @@ def update_dashboard_link(link_id: UUID, link_data: dict, current_user: UserInDB
     raise HTTPException(status_code=404, detail="Link not found")
 
 @router.delete("/dashboard-links/{link_id}")
-def delete_dashboard_link(link_id: UUID, current_user: UserInDB = Depends(get_current_admin_user)):
+def delete_dashboard_link(link_id: UUID, current_user: Dict = Depends(get_current_admin_user)):
     """Delete an admin dashboard link."""
     config = read_admin_config()
     links = config.get("dashboard_links", [])

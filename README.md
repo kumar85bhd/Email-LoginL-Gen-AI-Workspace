@@ -10,7 +10,7 @@ A unified React application combining a user-facing GenAI Workspace and an Admin
 - **Styling**: Tailwind CSS
 - **Routing**: React Router DOM (v6)
 - **State Management**: Context API (Auth)
-- **Authentication**: JWT (HS256) + SSO (Minimal Integration)
+- **Authentication**: SSO (JWT/RS256) + Header-Based Session
 - **Modules**:
   - **Workspace**: User interface for AI tools.
   - **Admin**: Dashboard for system health monitoring.
@@ -30,6 +30,8 @@ A unified React application combining a user-facing GenAI Workspace and an Admin
 /backend
   data/             # JSON storage (workspace.json)
   database.ts       # lowdb initialization and seeding
+  src/
+    auth_mgn/       # SSO Token Validation Logic
 /src
   /modules
     /workspace      # User-facing module
@@ -46,49 +48,73 @@ A unified React application combining a user-facing GenAI Workspace and an Admin
     npm install
     ```
 
-2.  **Run the application**:
+2.  **Configure Environment**:
+    Create a `.env` file in the root directory based on `.env.example`.
+    ```env
+    # Database
+    DATABASE_URL=sqlite:///./backend/data/sql_app.db
+
+    # SSO Configuration
+    VITE_SSO_URL=https://sso.example.com/login
+    VITE_SSO_REDIRECT_URL=http://localhost:3000/workspace
+    SSO_CERT_PATH=./backend/certs/public_key.pem
+    SSO_MOCK_MODE=true
+    ```
+    *Note: For local development, `SSO_MOCK_MODE=true` allows bypassing real SSO token validation.*
+
+3.  **Run the application**:
     ```bash
     npm run dev
     ```
     This starts the **Express backend** (which also serves the Vite frontend in development) automatically using a single Node.js entry point (`server.ts`).
 
-### Default Credentials
-- **Email**: `admin@example.com`
-- **Password**: `admin`
+## 6. SSO Authentication Architecture
 
-## 6. Environment Setup
-- Create a `.env` file in the root directory.
-- Example `.env`:
-  ```env
-  SECRET_KEY=super-secret-key
-  ```
+The application uses a Single Sign-On (SSO) mechanism for authentication.
 
-### Database Setup
-By default, the application uses **lowdb** for easy setup. The database file will be created automatically at `backend/data/workspace.json` on the first run.
+### Flow:
+1.  **Unauthenticated User**: Redirected to `VITE_SSO_URL` with a `redirect_url` parameter.
+2.  **SSO Provider**: Authenticates the user and redirects back to `VITE_SSO_REDIRECT_URL` with a `?token=<JWT>` parameter.
+3.  **Frontend**:
+    -   Extracts the token from the URL.
+    -   Calls `GET /api/authenticate?token=<JWT>`.
+4.  **Backend**:
+    -   Validates the JWT signature using the public key at `SSO_CERT_PATH` (RS256).
+    -   Extracts user email and name.
+    -   Checks `admin_user.json` to determine admin status.
+    -   Returns user profile `{ email, isAdmin, name }`.
+5.  **Session Management**:
+    -   Frontend stores email and admin status in `sessionStorage`.
+    -   Frontend attaches `X-User-Email` header to all subsequent API requests.
+    -   Backend middleware (`authenticateToken`) validates the `X-User-Email` header for protected routes.
+
+### Environment Variables
+-   `VITE_SSO_URL`: The URL of the SSO login page.
+-   `VITE_SSO_REDIRECT_URL`: The URL where SSO redirects back to (your app).
+-   `SSO_CERT_PATH`: Path to the public key file (PEM format) for JWT verification.
+-   `SSO_MOCK_MODE`: Set to `true` to enable mock token validation for development.
 
 ## 7. API Endpoints
 
 ### Authentication
-- `POST /api/auth/login`: Authenticate a user and get a JWT token.
-- `POST /api/auth/sso-login`: Authenticate via SSO identity.
-- `GET /api/auth/sso-callback`: Handle SSO provider callback.
-- `GET /api/auth/me`: Get the current authenticated user's information.
+-   `GET /api/authenticate`: Validate SSO token and get user profile.
+-   `GET /api/auth/session`: Validate existing session (via header).
 
 ### Workspace
-- `GET /api/workspace/apps`: Get all workspace apps.
-- `POST /api/workspace/apps`: Create a new workspace app.
-- `PUT /api/workspace/apps/{id}`: Update a workspace app.
-- `DELETE /api/workspace/apps/{id}`: Delete a workspace app.
-- `GET /api/workspace/categories`: Get all categories.
-- `POST /api/workspace/categories`: Create a new category.
-- `PUT /api/workspace/categories/{id}`: Update a category.
-- `DELETE /api/workspace/categories/{id}`: Delete a category.
+-   `GET /api/workspace/apps`: Get all workspace apps.
+-   `POST /api/workspace/apps`: Create a new workspace app.
+-   `PUT /api/workspace/apps/{id}`: Update a workspace app.
+-   `DELETE /api/workspace/apps/{id}`: Delete a workspace app.
+-   `GET /api/workspace/categories`: Get all categories.
+-   `POST /api/workspace/categories`: Create a new category.
+-   `PUT /api/workspace/categories/{id}`: Update a category.
+-   `DELETE /api/workspace/categories/{id}`: Delete a category.
 
 ### Admin
-- `GET /api/admin/dashboard-links`: Get all admin dashboard links.
-- `POST /api/admin/dashboard-links`: Create a new admin dashboard link.
-- `PUT /api/admin/dashboard-links/{id}`: Update an admin dashboard link.
-- `DELETE /api/admin/dashboard-links/{id}`: Delete an admin dashboard link.
+-   `GET /api/admin/dashboard-links`: Get all admin dashboard links.
+-   `POST /api/admin/dashboard-links`: Create a new admin dashboard link.
+-   `PUT /api/admin/dashboard-links/{id}`: Update an admin dashboard link.
+-   `DELETE /api/admin/dashboard-links/{id}`: Delete an admin dashboard link.
 
 ## 8. Build Instructions
 To build the application for production:
@@ -137,6 +163,3 @@ The output will be in the `dist` directory.
 - **Dynamic Icon Rendering**: Implemented a `DynamicIcon` component (`src/shared/components/ui/DynamicIcon.tsx`) that dynamically loads icons from the `lucide-react` library based on string names stored in the database or config.
 - **Data-Driven UI**: Removed hardcoded text blocks and placeholder metrics from Workspace and Admin cards. The UI now strictly adheres to the data provided via the Application Management section, ensuring a cleaner and more accurate representation of services.
 - **Fallback Mechanisms**: The `DynamicIcon` component includes a fallback to a default icon (`Box`) if an invalid or missing icon name is provided, preventing UI breakage.
-
-## 15. Single Sign-On (SSO) Integration
-For instructions on how to integrate Single Sign-On (SSO) using OAuth 2.0 / OIDC (e.g., Google, Microsoft, Okta) into the platform, please refer to the [SSO Integration Guide](docs/SSO_INTEGRATION.md).

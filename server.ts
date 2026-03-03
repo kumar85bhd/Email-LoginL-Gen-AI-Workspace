@@ -4,19 +4,51 @@ import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import { db, initDb, seedDb } from "./backend/database.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load .env manually if not loaded
+const envPath = path.join(process.cwd(), '.env');
+if (fs.existsSync(envPath)) {
+    const envConfig = fs.readFileSync(envPath, 'utf-8');
+    envConfig.split('\n').forEach(line => {
+        const [key, value] = line.split('=');
+        if (key && value && !process.env[key.trim()]) {
+            process.env[key.trim()] = value.trim();
+        }
+    });
+}
+
 const ADMIN_CONFIG_PATH = path.join(__dirname, "admin_config.json");
 const ADMIN_USER_PATH = path.join(__dirname, "admin_user.json");
+
+const SSO_CERT_PATH = process.env.SSO_CERT_PATH;
+const SSO_MOCK_MODE = process.env.SSO_MOCK_MODE === "true";
+
+let PUBLIC_KEY_CACHE: string | null = null;
 
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   console.log("🚀 Starting Unified GenAI Workspace (Node.js Backend)...");
+  
+  // Cache Public Key
+  if (!SSO_MOCK_MODE && SSO_CERT_PATH) {
+      try {
+          if (fs.existsSync(SSO_CERT_PATH)) {
+              PUBLIC_KEY_CACHE = fs.readFileSync(SSO_CERT_PATH, 'utf-8');
+              console.log("✅ Public key cached successfully.");
+          } else {
+              console.warn(`⚠️ Certificate file not found at ${SSO_CERT_PATH}`);
+          }
+      } catch (e) {
+          console.error("❌ Error caching public key:", e);
+      }
+  }
   
   // Initialize Database
   await initDb();
@@ -68,43 +100,87 @@ async function startServer() {
   // --- API Routes ---
 
   /**
-   * Identifies a user by email and returns their admin status.
-   * Phase 1: Identity Simplification (Email-Based Access)
+   * Authenticates a user via SSO token.
+   * Phase 2: SSO Integration
    */
-  app.post("/api/identify", async (req, res) => {
-    const { email } = req.body;
+  app.get("/api/authenticate", async (req, res) => {
+    const token = req.query.token as string;
     
-    if (!email) {
-      return res.status(400).json({ detail: "Email is missing" });
+    if (!token) {
+      return res.status(400).json({ detail: "Token is missing" });
     }
 
-    // Strict email validation using regex
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      return res.status(400).json({ detail: "Invalid email format" });
-    }
-
-    let isAdmin = false;
     try {
-      if (fs.existsSync(ADMIN_USER_PATH)) {
-        const adminEmails = JSON.parse(fs.readFileSync(ADMIN_USER_PATH, 'utf-8'));
-        isAdmin = adminEmails.includes(email);
-      }
-    } catch (err) {
-      console.error("Error reading admin_user.json:", err);
-    }
+      let email = "";
+      let name = "";
+      
+      if (SSO_MOCK_MODE) {
+        // Deterministic Mock Mode
+        if (token === "mock-admin-token") {
+            email = "admin@company.com";
+            name = "Mock Admin";
+        } else if (token === "mock-user-token") {
+            email = "user@company.com";
+            name = "Mock User";
+        } else {
+             return res.status(401).json({ detail: "Invalid mock token" });
+        }
+      } else {
+        if (!PUBLIC_KEY_CACHE) {
+             // Try to reload if missing (e.g. file appeared later)
+             if (SSO_CERT_PATH && fs.existsSync(SSO_CERT_PATH)) {
+                 PUBLIC_KEY_CACHE = fs.readFileSync(SSO_CERT_PATH, 'utf-8');
+             } else {
+                 console.error("SSO_CERT_PATH is not set or file missing");
+                 return res.status(500).json({ detail: "Server configuration error" });
+             }
+        }
 
-    res.json({ email, isAdmin });
+        const decoded: any = jwt.verify(token, PUBLIC_KEY_CACHE!, { algorithms: ["RS256"] });
+        email = decoded.email;
+        name = decoded.name;
+      }
+
+      if (!email) {
+        return res.status(400).json({ detail: "Email not found in token" });
+      }
+
+      const adminEmails = getAdminEmails();
+      // In mock mode, we need to ensure admin@company.com is treated as admin
+      // We can temporarily inject it into the check or rely on admin_user.json
+      // For hardening, let's just check the list.
+      // If mock mode, we might want to force admin status for the admin token?
+      // The requirement says: "Ensure admin gating works using these mock emails"
+      // This implies we should add admin@company.com to admin_user.json OR handle it here.
+      // Let's handle it here for mock mode safety without modifying the file.
+      
+      let isAdmin = adminEmails.includes(email);
+      
+      if (SSO_MOCK_MODE && email === "admin@company.com") {
+          isAdmin = true;
+      }
+
+      res.json({ email, isAdmin, name });
+    } catch (err: any) {
+      console.error("Authentication error:", err.message);
+      res.status(401).json({ detail: "Invalid token" });
+    }
   });
 
-  app.get("/api/auth/me", authenticateToken, async (req: any, res) => {
+  app.get("/api/auth/session", authenticateToken, async (req: any, res) => {
     res.json({ email: req.user.email, is_admin: req.user.is_admin });
   });
 
   // Workspace Categories
   app.get("/api/workspace/categories", authenticateToken, async (req, res) => {
-    const categories = [...db.data.categories].sort((a, b) => a.name.localeCompare(b.name));
-    res.json(categories);
+    try {
+      if (!db.data) await db.read();
+      const categories = [...db.data.categories].sort((a, b) => a.name.localeCompare(b.name));
+      res.json(categories);
+    } catch (error: any) {
+      console.error("Error fetching categories:", error);
+      res.status(500).json({ detail: "Internal Server Error" });
+    }
   });
 
   app.post("/api/workspace/categories", authenticateToken, isAdmin, async (req, res) => {
@@ -166,38 +242,45 @@ async function startServer() {
 
   // Workspace Apps
   app.get("/api/workspace/apps", authenticateToken, async (req, res) => {
-    const includeInactive = req.query.all === 'true';
-    
-    let apps = db.data.workspace_apps;
-    if (!includeInactive) {
-      apps = apps.filter((a: any) => a.is_active);
-    }
-
-    const mappedApps = apps.map((app: any) => {
-      const category = db.data.categories.find((c: any) => c.id === app.category_id);
-      return {
-        ...app,
-        category: category ? category.name : 'Uncategorized',
-        desc: app.description,
-        keyFeatures: app.key_features,
-        metricsEnabled: !!app.metrics_enabled,
-        totalLaunches: app.total_launches || 0,
-        baseActivity: 'System: Active',
-        isFavorite: false,
-        metrics: '94/100',
-        status: 'Healthy',
-        lastUsed: new Date().toISOString()
-      };
-    });
-
-    mappedApps.sort((a: any, b: any) => {
-      if (a.display_order !== b.display_order) {
-        return a.display_order - b.display_order;
+    try {
+      if (!db.data) await db.read();
+      
+      const includeInactive = req.query.all === 'true';
+      
+      let apps = db.data.workspace_apps;
+      if (!includeInactive) {
+        apps = apps.filter((a: any) => a.is_active);
       }
-      return a.name.localeCompare(b.name);
-    });
 
-    res.json(mappedApps);
+      const mappedApps = apps.map((app: any) => {
+        const category = db.data.categories.find((c: any) => c.id === app.category_id);
+        return {
+          ...app,
+          category: category ? category.name : 'Uncategorized',
+          desc: app.description,
+          keyFeatures: app.key_features,
+          metricsEnabled: !!app.metrics_enabled,
+          totalLaunches: app.total_launches || 0,
+          baseActivity: 'System: Active',
+          isFavorite: false,
+          metrics: '94/100',
+          status: 'Healthy',
+          lastUsed: new Date().toISOString()
+        };
+      });
+
+      mappedApps.sort((a: any, b: any) => {
+        if (a.display_order !== b.display_order) {
+          return a.display_order - b.display_order;
+        }
+        return a.name.localeCompare(b.name);
+      });
+
+      res.json(mappedApps);
+    } catch (error: any) {
+      console.error("Error fetching apps:", error);
+      res.status(500).json({ detail: "Internal Server Error" });
+    }
   });
 
   app.post("/api/workspace/apps", authenticateToken, isAdmin, async (req, res) => {
