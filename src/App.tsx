@@ -6,7 +6,7 @@ import { AuthProvider } from './shared/context/AuthContext';
 import { useAuth } from './shared/context/useAuth';
 import WorkspaceModule from './modules/workspace/WorkspaceModule';
 import AdminModule from './modules/admin/AdminModule';
-import Layout from './components/Layout';
+import Layout from './shared/components/Layout';
 import LoggedOut from './pages/LoggedOut';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {

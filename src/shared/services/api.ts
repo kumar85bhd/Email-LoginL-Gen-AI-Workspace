@@ -1,4 +1,4 @@
-import { AppData, AppMetric } from '../types';
+import { AppData, AppMetric, CategoryData } from '../types';
 
 const getAuthHeaders = () => {
   const email = sessionStorage.getItem('email');
@@ -73,7 +73,7 @@ export const api = {
    * Retrieves all workspace categories.
    * @returns A promise resolving to the list of categories.
    */
-  getCategories: async (): Promise<any[]> => {
+  getCategories: async (): Promise<CategoryData[]> => {
     try {
       const res = await fetch('/api/workspace/categories', {
         headers: getAuthHeaders()

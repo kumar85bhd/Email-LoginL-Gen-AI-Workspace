@@ -68,6 +68,10 @@ const AdminDashboardLinksTab: React.FC<AdminDashboardLinksTabProps> = ({ addToas
       addToast('Name is required', 'error');
       return false;
     }
+    if (!/^[a-zA-Z0-9\s.,!?-_()]*$/.test(form.name)) {
+      addToast('Name contains invalid characters. Allowed: alphanumeric, spaces, ., ! ? - _ ( )', 'error');
+      return false;
+    }
     if (!form.url) {
       addToast('URL is required', 'error');
       return false;
@@ -81,8 +85,8 @@ const AdminDashboardLinksTab: React.FC<AdminDashboardLinksTabProps> = ({ addToas
       return false;
     }
     // Basic character validation for description
-    if (form.description && !/^[a-zA-Z0-9\s.,!?-]*$/.test(form.description)) {
-      addToast('Description contains invalid characters', 'error');
+    if (form.description && !/^[a-zA-Z0-9\s.,!?-_()]*$/.test(form.description)) {
+      addToast('Description contains invalid characters. Allowed: alphanumeric, spaces, ., ! ? - _ ( )', 'error');
       return false;
     }
     return true;

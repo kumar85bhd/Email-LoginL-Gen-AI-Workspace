@@ -1,29 +1,17 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Home, Star, Briefcase, BookOpen, Layout, Settings, Database, Folder, Users, Presentation } from 'lucide-react';
-import { FilterType } from '../../../shared/types';
+import { Home, Star } from 'lucide-react';
+import { DynamicIcon } from '../../../shared/components/ui/DynamicIcon';
+import { FilterType, CategoryData } from '../../../shared/types';
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
 import { getCategoryStyles } from '../../../shared/utils/categoryColors';
 
 interface SidebarNavigationProps {
   activeFilter: FilterType;
   activeCategory: string | null;
-  categories: string[];
+  categories: CategoryData[];
   onNavigate: (filter: FilterType, category: string | null) => void;
 }
-
-const getCategoryIcon = (category: string) => {
-    const size = 20;
-    const lower = (category || '').toLowerCase();
-    if (lower.includes('product')) return <Briefcase size={size} />;
-    if (lower.includes('know')) return <BookOpen size={size} />;
-    if (lower.includes('plat')) return <Layout size={size} />;
-    if (lower.includes('data')) return <Database size={size} />;
-    if (lower.includes('set')) return <Settings size={size} />;
-    if (lower.includes('custom')) return <Users size={size} />;
-    if (lower.includes('present')) return <Presentation size={size} />;
-    return <Folder size={size} />;
-};
 
 const getColorConfig = (category: string | null) => {
     return getCategoryStyles(category);
@@ -85,14 +73,14 @@ const SidebarNavigation: React.FC<SidebarNavigationProps> = ({
             <div className="flex-1 overflow-y-auto no-scrollbar">
                 {categories.map(category => (
                     <NavItem
-                        key={category}
+                        key={category.id}
                         isExpanded={isExpanded}
-                        isActive={activeCategory === category}
-                        onClick={() => onNavigate('dashboard', category)}
-                        label={category}
-                        categoryName={category}
+                        isActive={activeCategory === category.name}
+                        onClick={() => onNavigate('dashboard', category.name)}
+                        label={category.name}
+                        categoryName={category.name}
                     >
-                        {getCategoryIcon(category)}
+                        <DynamicIcon name={category.icon || 'Folder'} size={20} />
                     </NavItem>
                 ))}
             </div>

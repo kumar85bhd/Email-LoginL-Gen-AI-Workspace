@@ -13,7 +13,7 @@ A unified React application combining a user-facing GenAI Workspace and an Admin
 - **Authentication**: SSO (JWT/RS256) + Header-Based Session
 - **Modules**:
   - **Workspace**: User interface for AI tools.
-  - **Admin**: Dashboard for system health monitoring.
+  - **Admin**: Dashboard for system health monitoring and application management.
 
 ## 3. Tech Stack
 - **React 18+**
@@ -28,16 +28,16 @@ A unified React application combining a user-facing GenAI Workspace and an Admin
 ## 4. Folder Structure
 ```
 /backend
-  data/             # JSON storage (workspace.json)
-  database.ts       # lowdb initialization and seeding
+  data/             # JSON storage (workspace.json - Source of truth for users, categories, and apps)
+  database.ts       # lowdb initialization and seeding logic
   src/
     auth_mgn/       # SSO Token Validation Logic
 /src
   /modules
-    /workspace      # User-facing module
-    /admin          # Admin dashboard module
-  /shared           # Shared components, contexts, services
-  App.tsx           # Main application router
+    /workspace      # User-facing module (Home, Favorites, Categories)
+    /admin          # Admin dashboard module (System Health, App Management)
+  /shared           # Shared components, hooks, contexts, services
+  App.tsx           # Main application router and provider setup
   main.tsx          # Application entry point
 ```
 
@@ -51,9 +51,6 @@ A unified React application combining a user-facing GenAI Workspace and an Admin
 2.  **Configure Environment**:
     Create a `.env` file in the root directory based on `.env.example`.
     ```env
-    # Database
-    DATABASE_URL=sqlite:///./backend/data/sql_app.db
-
     # SSO Configuration
     VITE_SSO_URL=https://sso.example.com/login
     VITE_SSO_REDIRECT_URL=http://localhost:3000/workspace
@@ -81,18 +78,12 @@ The application uses a Single Sign-On (SSO) mechanism for authentication.
 4.  **Backend**:
     -   Validates the JWT signature using the public key at `SSO_CERT_PATH` (RS256).
     -   Extracts user email and name.
-    -   Checks `admin_user.json` to determine admin status.
+    -   Checks `workspace.json` to determine admin status.
     -   Returns user profile `{ email, isAdmin, name }`.
 5.  **Session Management**:
     -   Frontend stores email and admin status in `sessionStorage`.
     -   Frontend attaches `X-User-Email` header to all subsequent API requests.
     -   Backend middleware (`authenticateToken`) validates the `X-User-Email` header for protected routes.
-
-### Environment Variables
--   `VITE_SSO_URL`: The URL of the SSO login page.
--   `VITE_SSO_REDIRECT_URL`: The URL where SSO redirects back to (your app).
--   `SSO_CERT_PATH`: Path to the public key file (PEM format) for JWT verification.
--   `SSO_MOCK_MODE`: Set to `true` to enable mock token validation for development.
 
 ## 7. API Endpoints
 
@@ -100,66 +91,71 @@ The application uses a Single Sign-On (SSO) mechanism for authentication.
 -   `GET /api/authenticate`: Validate SSO token and get user profile.
 -   `GET /api/auth/session`: Validate existing session (via header).
 
-### Workspace
+### Workspace (User Facing)
 -   `GET /api/workspace/apps`: Get all workspace apps.
--   `POST /api/workspace/apps`: Create a new workspace app.
--   `PUT /api/workspace/apps/{id}`: Update a workspace app.
--   `DELETE /api/workspace/apps/{id}`: Delete a workspace app.
 -   `GET /api/workspace/categories`: Get all categories.
--   `POST /api/workspace/categories`: Create a new category.
--   `PUT /api/workspace/categories/{id}`: Update a category.
--   `DELETE /api/workspace/categories/{id}`: Delete a category.
 
-### Admin
+### Admin (Management)
 -   `GET /api/admin/dashboard-links`: Get all admin dashboard links.
 -   `POST /api/admin/dashboard-links`: Create a new admin dashboard link.
 -   `PUT /api/admin/dashboard-links/{id}`: Update an admin dashboard link.
 -   `DELETE /api/admin/dashboard-links/{id}`: Delete an admin dashboard link.
+-   `GET /api/admin/categories`: Manage system categories.
+-   `POST /api/admin/categories`: Create a new category.
+-   `PUT /api/admin/categories/{id}`: Update a category.
+-   `DELETE /api/admin/categories/{id}`: Delete a category.
+-   `GET /api/admin/workspace-apps`: Manage workspace applications.
+-   `POST /api/admin/workspace-apps`: Create a new workspace app.
+-   `PUT /api/admin/workspace-apps/{id}`: Update a workspace app.
+-   `DELETE /api/admin/workspace-apps/{id}`: Delete a workspace app.
 
-## 8. Build Instructions
-To build the application for production:
-```bash
-npm run build
-```
-The output will be in the `dist` directory.
+## 8. Build & Run Instructions
 
-## 9. Role-Based Routing
+### Development
+1.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+2.  **Run locally**:
+    ```bash
+    npm run dev
+    ```
+    This starts the backend server (using `tsx`) which also serves the Vite frontend in middleware mode.
+
+### Production
+1.  **Build Frontend**:
+    ```bash
+    npm run build
+    ```
+    This compiles the React application into the `dist/` directory.
+
+2.  **Start Server**:
+    ```bash
+    npm start
+    ```
+    This runs `node server.ts` (using `tsx` or similar loader) to start the Express server. The server will automatically serve the static files from `dist/`.
+
+    > **Note:** The backend is **not** compiled to a separate `dist/server.js` file. It runs directly from source to support TypeScript features at runtime.
+
+## 9. Validation Rules
+### Admin Dashboard Links & Workspace Apps
+-   **Name**: Required. Allowed characters: Alphanumeric, spaces, `.` `,` `!` `?` `-` `_` `(` `)`.
+-   **Description**: Optional (max 200 chars).
+-   **URL**: Required. Must be a valid URL string.
+-   **Category**: Required.
+
+## 10. Role-Based Routing
 - **Workspace**: Accessible to all authenticated users.
 - **Admin**: Accessible only to users with the `is_admin` flag set to `true`.
 
-## 10. Future Enhancement Roadmap
-- **Enhanced Analytics**: Add more detailed metrics and visualizations.
-- **User Management**: Implement user roles and permissions management in the admin dashboard.
-- **Notifications**: Add real-time notifications for system alerts.
+## 11. Recent Updates
+### Application Management (Phase 9 Update)
+- **Unified Management**: Added a dedicated "Application Management" section in the Admin dashboard.
+- **Tabs Interface**: Switch between managing "Workspace Apps" and "Categories" seamlessly.
+- **Real-time Updates**: Changes made in the Admin dashboard are immediately reflected in the user-facing Workspace.
+- **Category Management**: Full CRUD capabilities for categories, including icon selection (using Lucide icon names).
 
-## 11. Recent Updates (Phase 1)
-### Hero Redesign (Phase 1 Update)
-- **New Hero Component**: Added a dedicated `Hero` component with:
-  - **Height**: Fixed 280px-300px for consistency.
-  - **Styling**: Premium glassmorphism with subtle gradient backgrounds (Slate/Indigo).
-  - **Illustration**: Custom CSS-based 3D-style Robot Character with animated expressions.
-  - **Responsiveness**: Adaptive layout that hides illustration on mobile.
-- **Header**: Reduced height to 64px (h-16) for better screen real estate.
-- **Performance**: Optimized for zero layout shift and fast loading.
-
-### Layout Architecture (Phase 5 Update)
-- **Navigation**: Collapsible left sidebar (`SidebarNavigation.tsx`) for main navigation (Home, Favorites, Categories).
-  - Expands on hover from 72px to 240px.
-  - Vertical layout removes the need for a 'More' dropdown for categories.
-- **Header**: The main header is now dedicated to the greeting, search, view mode, and profile controls.
-- **Scroll Optimization**:
-  - Main content area handles scrolling (`overflow-y-auto`).
-  - Body scroll locked (`overflow-hidden`).
-  - Scrollbar visually hidden but functional.
-- **Hero**: Integrated into scrollable area, triggering nav collapse when scrolled past.
-## 12. Admin Architecture (Phase 6 Update)
-- **Structured Dashboard Console**: The Admin page has been refactored into a clean, neutral Infrastructure Dashboard.
-- **Layout**: Features a left sidebar (`AdminSidebar.tsx`) for filtering services by category, and a main content area (`AdminDashboardCards.tsx`) displaying grouped service cards.
-- **Design Philosophy**: Strict adherence to a stable, professional UI. Removed all animations, glow effects, and mock polling.
-- **Metrics Handling**: Service cards (`AdminCard.tsx`) fetch their own metrics on mount with a manual refresh option, ensuring no background polling overhead.
-- **Color Strategy**: Utilizes a neutral slate palette with indigo accents for active states, supporting both light and dark modes seamlessly.
-
-## 14. UI & Component Enhancements (Phase 8 Update)
-- **Dynamic Icon Rendering**: Implemented a `DynamicIcon` component (`src/shared/components/ui/DynamicIcon.tsx`) that dynamically loads icons from the `lucide-react` library based on string names stored in the database or config.
-- **Data-Driven UI**: Removed hardcoded text blocks and placeholder metrics from Workspace and Admin cards. The UI now strictly adheres to the data provided via the Application Management section, ensuring a cleaner and more accurate representation of services.
-- **Fallback Mechanisms**: The `DynamicIcon` component includes a fallback to a default icon (`Box`) if an invalid or missing icon name is provided, preventing UI breakage.
+### UI & Component Enhancements
+- **Dynamic Icon Rendering**: Implemented a `DynamicIcon` component that dynamically loads icons from `lucide-react` based on string names stored in the database.
+- **Premium Hero**: Redesigned the Workspace hero section with glassmorphism and animated 3D-style illustrations.
+- **Collapsible Sidebar**: Implemented a modern, space-efficient navigation sidebar that expands on hover.

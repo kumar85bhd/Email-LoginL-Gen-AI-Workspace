@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Edit2, Trash2, Plus, Check, X, FileText, Info, ArrowUp, ArrowDown } from 'lucide-react';
 import { ToastType } from '../../../shared/components/Toast';
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
+import { DynamicIcon } from '../../../shared/components/ui/DynamicIcon';
 
 interface AppData {
   id: number;
@@ -69,8 +70,8 @@ const WorkspaceAppsTab: React.FC<WorkspaceAppsTabProps> = ({ addToast }) => {
       addToast('Name is required and must be less than 50 characters', 'error');
       return false;
     }
-    if (!form.name.match(/^[a-zA-Z0-9 &_-]+$/)) {
-      addToast('Name contains invalid characters. Only alphanumeric, spaces, hyphens, and underscores are allowed.', 'error');
+    if (!form.name.match(/^[a-zA-Z0-9 &_,()-]+$/)) {
+      addToast('Name contains invalid characters. Only alphanumeric, spaces, hyphens, underscores, commas, and parentheses are allowed.', 'error');
       return false;
     }
     if (!form.category) {
@@ -274,7 +275,17 @@ const WorkspaceAppsTab: React.FC<WorkspaceAppsTabProps> = ({ addToast }) => {
                   </th>
                   <th className="px-6 py-3 font-medium">URL</th>
                   <th className="px-6 py-3 font-medium text-center">Content</th>
-                  <th className="px-6 py-3 font-medium text-center">Active</th>
+                  <th 
+                    className="px-6 py-3 font-medium text-center cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800"
+                    onClick={() => handleSort('is_active')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      Active
+                      {sortConfig?.key === 'is_active' && (
+                        sortConfig.direction === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />
+                      )}
+                    </div>
+                  </th>
                   <th className="px-6 py-3 font-medium text-center">
                     <div className="flex items-center justify-center gap-1">
                       Metrics
@@ -403,7 +414,10 @@ const WorkspaceAppsTab: React.FC<WorkspaceAppsTabProps> = ({ addToast }) => {
                             className="w-full px-2 py-1 border rounded dark:bg-slate-800 dark:border-slate-600"
                           />
                         ) : (
-                          <span className="text-slate-500 font-mono text-xs">{app.icon}</span>
+                          <div className="flex items-center gap-2">
+                            <DynamicIcon name={app.icon} size={16} className="text-slate-400" />
+                            <span className="text-slate-500 font-mono text-xs">{app.icon}</span>
+                          </div>
                         )}
                       </td>
                       <td className="px-6 py-4">

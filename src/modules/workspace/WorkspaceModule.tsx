@@ -7,7 +7,7 @@ import SidebarNavigation from './components/SidebarNavigation';
 import CardSurfaceContainer from './components/CardSurfaceContainer';
 import RobotAnimation from './components/RobotAnimation';
 import ToastContainer, { ToastMessage, ToastType } from '../../shared/components/Toast';
-import { AppData, FilterType, ViewMode } from '../../shared/types';
+import { AppData, FilterType, ViewMode, CategoryData } from '../../shared/types';
 import { api } from '../../shared/services/api';
 import { PackageOpen, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../../shared/context/useAuth';
@@ -16,6 +16,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const WorkspaceModule: React.FC = () => {
   const [apps, setApps] = useState<AppData[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('card');
   const [cardsPerRow, setCardsPerRow] = useState<number>(4);
@@ -57,12 +58,14 @@ const WorkspaceModule: React.FC = () => {
     const initWorkspace = async () => {
       setLoading(true);
       
-      const [appsRes, configRes] = await Promise.all([
+      const [appsRes, configRes, categoriesRes] = await Promise.all([
         api.getApps(),
-        api.getConfig()
+        api.getConfig(),
+        api.getCategories()
       ]);
       
       setApps(appsRes.data);
+      setCategories(categoriesRes);
       setCardsPerRow(configRes.cardsPerRow);
       
       if (!appsRes.isLive) {
@@ -74,10 +77,6 @@ const WorkspaceModule: React.FC = () => {
 
     initWorkspace();
   }, []);
-
-  const categories = useMemo(() => {
-    return Array.from(new Set(apps.map(a => a.category).filter(Boolean))).sort() as string[];
-  }, [apps]);
 
   const handleToggleFav = async (id: number) => {
     const app = apps.find(a => a.id === id);

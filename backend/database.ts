@@ -88,7 +88,7 @@ export async function seedDb() {
 
   // Seed Users
   if (db.data.users.length === 0) {
-    console.log('🌱 Seeding users...');
+    // console.log('🌱 Seeding users...');
     const usersJsonPath = path.join(__dirname, '..', 'backend', 'data', 'users.json');
     if (fs.existsSync(usersJsonPath)) {
       const users = JSON.parse(fs.readFileSync(usersJsonPath, 'utf-8'));
@@ -103,13 +103,13 @@ export async function seedDb() {
         });
       }
     } else {
-      console.log(`⚠️ Users file not found at ${usersJsonPath}`);
+      // console.log(`⚠️ Users file not found at ${usersJsonPath}`);
     }
   }
 
   // Seed Categories
   if (db.data.categories.length === 0) {
-    console.log('🌱 Seeding categories...');
+    // console.log('🌱 Seeding categories...');
     const categories = [
       { name: 'Generative Text', slug: 'gen-text', icon: 'MessageSquare' },
       { name: 'Image Generation', slug: 'gen-image', icon: 'Image' },
@@ -130,7 +130,7 @@ export async function seedDb() {
 
   // Seed Apps
   if (db.data.workspace_apps.length === 0) {
-    console.log('🌱 Seeding apps...');
+    // console.log('🌱 Seeding apps...');
     const catMap = Object.fromEntries(db.data.categories.map((c: Category) => [c.slug, c.id]));
 
     const apps = [

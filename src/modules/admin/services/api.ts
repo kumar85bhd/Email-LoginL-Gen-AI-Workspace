@@ -18,12 +18,5 @@ export const fetchServiceMetrics = async (_serviceId: string): Promise<Metric[]>
   ];
 };
 
-export const fetchDashboardLinks = async (): Promise<any[]> => {
-  const email = sessionStorage.getItem('email');
-  const res = await fetch('/api/admin/dashboard-links', {
-    headers: { 'X-User-Email': email || '' }
-  });
-  if (!res.ok) throw new Error('Failed to fetch dashboard links');
-  return res.json();
-};
+
 

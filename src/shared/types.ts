@@ -1,3 +1,10 @@
+export interface CategoryData {
+  id: number;
+  name: string;
+  icon: string;
+  slug?: string;
+}
+
 export interface AppData {
   id: number;
   name: string;

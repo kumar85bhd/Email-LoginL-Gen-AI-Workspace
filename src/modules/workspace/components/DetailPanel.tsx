@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { X, ExternalLink, Activity, Clock, Star, Share2, Zap, ArrowUpRight } from 'lucide-react';
+import { X, ExternalLink, Activity, Clock, Star, Share2, ArrowUpRight } from 'lucide-react';
+import { DynamicIcon } from '../../../shared/components/ui/DynamicIcon';
 import { AppData, AppMetric } from '../../../shared/types';
 import { api } from '../../../shared/services/api';
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
@@ -87,7 +88,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({ app, onClose }) => {
         <div className="p-6 overflow-y-auto flex-1">
           <div className="flex items-start gap-4 mb-6">
             <div className={`w-16 h-16 rounded-2xl ${catStyles.bg} ${catStyles.text} flex items-center justify-center shadow-lg`}>
-              <Zap size={32} />
+              <DynamicIcon name={app.icon} size={32} />
             </div>
             <div>
               <h2 className="text-2xl font-bold text-foreground">{app.name}</h2>
