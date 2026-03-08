@@ -55,9 +55,9 @@ A unified React application combining a user-facing GenAI Workspace and an Admin
     VITE_SSO_URL=https://sso.example.com/login
     VITE_SSO_REDIRECT_URL=http://localhost:3000/workspace
     SSO_CERT_PATH=./backend/certs/public_key.pem
-    SSO_MOCK_MODE=true
+    VITE_SSO_MOCK_MODE=true
     ```
-    *Note: For local development, `SSO_MOCK_MODE=true` allows bypassing real SSO token validation.*
+    *Note: For local development, `VITE_SSO_MOCK_MODE=true` allows bypassing real SSO token validation.*
 
 3.  **Run the application**:
     ```bash

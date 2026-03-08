@@ -19,7 +19,6 @@ const WorkspaceModule: React.FC = () => {
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<ViewMode>('card');
-  const [cardsPerRow, setCardsPerRow] = useState<number>(4);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterType>('dashboard');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -58,15 +57,13 @@ const WorkspaceModule: React.FC = () => {
     const initWorkspace = async () => {
       setLoading(true);
       
-      const [appsRes, configRes, categoriesRes] = await Promise.all([
+      const [appsRes, categoriesRes] = await Promise.all([
         api.getApps(),
-        api.getConfig(),
         api.getCategories()
       ]);
       
       setApps(appsRes.data);
       setCategories(categoriesRes);
-      setCardsPerRow(configRes.cardsPerRow);
       
       if (!appsRes.isLive) {
         addToast("Backend server is unreachable. Showing cached tools.", "error");
@@ -161,9 +158,9 @@ const WorkspaceModule: React.FC = () => {
       if (viewMode === 'icon') {
         return 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6';
       }
-      return cardsPerRow === 3 
-        ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
-        : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4';
+      // Phase A: Responsive Grid Optimization
+      // Phase D: Balanced Grid Alignment using auto-fill and minmax
+      return 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center';
     };
 
     return (
@@ -299,11 +296,18 @@ const WorkspaceModule: React.FC = () => {
           ref={mainContentRef}
           className="flex-1 overflow-y-auto scroll-smooth no-scrollbar relative flex flex-col min-h-0 pt-2"
         >
+           {/* Phase C: Theme-Aware Background Enhancement */}
+           <div className="absolute inset-0 z-[-1] pointer-events-none opacity-[0.05]">
+              <div className="absolute inset-0 dark:hidden bg-[radial-gradient(circle_at_50%_10%,_rgba(120,119,255,0.05),_transparent_50%),_radial-gradient(circle_at_90%_90%,_rgba(0,160,255,0.04),_transparent_60%),_linear-gradient(180deg,_#ffffff_0%,_#f6f8fc_100%)]" />
+              <div className="absolute inset-0 hidden dark:block bg-[radial-gradient(circle_at_50%_20%,_rgba(120,119,255,0.08),_transparent_50%),_radial-gradient(circle_at_80%_80%,_rgba(0,255,200,0.05),_transparent_60%),_linear-gradient(180deg,_#0f0f1a_0%,_#0a0a12_100%)]" />
+           </div>
+
            <div className="p-2 md:p-4 w-full mx-auto space-y-3 flex-1 max-w-[1600px]">
              <AnimatePresence mode="wait">
                <motion.div 
                   key={activeFilter + '-' + activeCategory} 
                   className="glass-panel cardholder-glow rounded-3xl relative overflow-hidden bg-white/70 dark:bg-[#14141c]/60 backdrop-blur-md border border-gray-200 dark:border-white/10"
+                  style={{ minHeight: 'calc(100vh - 180px)', alignContent: 'start' }} // Phase B: Remove Bottom Whitespace
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}

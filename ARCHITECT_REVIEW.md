@@ -64,7 +64,7 @@ The following files/directories have been identified as unused and safe to remov
 ## 5. Environment Variables
 - `server.ts` manually loads `.env`.
 - `SSO_CERT_PATH` is used.
-- `SSO_MOCK_MODE` is used.
+- `VITE_SSO_MOCK_MODE` is used.
 
 **Recommendation:**
 - Ensure `.env.example` documents these variables.

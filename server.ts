@@ -26,7 +26,7 @@ const ADMIN_CONFIG_PATH = path.join(__dirname, "admin_config.json");
 const ADMIN_USER_PATH = path.join(__dirname, "admin_user.json");
 
 const SSO_CERT_PATH = process.env.SSO_CERT_PATH;
-const SSO_MOCK_MODE = process.env.SSO_MOCK_MODE === "true";
+const SSO_MOCK_MODE = process.env.VITE_SSO_MOCK_MODE === "true" || process.env.SSO_MOCK_MODE === "true" || !SSO_CERT_PATH;
 
 let PUBLIC_KEY_CACHE: string | null = null;
 
@@ -86,6 +86,10 @@ async function startServer() {
     // Check if admin
     const adminEmails = getAdminEmails();
     req.user.is_admin = adminEmails.includes(userEmail);
+    
+    if (SSO_MOCK_MODE && userEmail === "admin@company.com") {
+        req.user.is_admin = true;
+    }
     
     next();
   };
@@ -445,10 +449,9 @@ async function startServer() {
     });
   }
 
-  // app.listen(PORT, "0.0.0.0", () => {
-  //   console.log(`✨ Unified Server running at http://localhost:${PORT}`);
-  // });
-  app.listen(PORT, "0.0.0.0");
+  app.listen(PORT, "0.0.0.0", () => {
+    console.log(`✨ Unified Server running at http://localhost:${PORT}`);
+  });
 }
 
 startServer().catch(err => {

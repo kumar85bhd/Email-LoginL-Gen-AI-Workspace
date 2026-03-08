@@ -130,7 +130,7 @@ const AppItem: React.FC<AppItemProps> = ({ app, viewMode, onToggleFav, onOpenDet
         </div>
 
         {app.desc && (
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 font-sans mb-3">
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 font-sans mb-3">
             {app.desc}
           </p>
         )}

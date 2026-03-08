@@ -19,6 +19,7 @@ interface AuthContextType {
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const SSO_URL = import.meta.env.VITE_SSO_URL;
+const SSO_MOCK_MODE = import.meta.env.VITE_SSO_MOCK_MODE === 'true' || !SSO_URL;
 
 /**
  * Context provider for authentication state and operations.
@@ -95,12 +96,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setError('Authentication failed. Please login again.');
             handleLogout();
             setTimeout(() => {
-                if (SSO_URL) window.location.href = SSO_URL;
+                if (SSO_URL && !SSO_MOCK_MODE) window.location.href = SSO_URL;
             }, 2000);
             setLoading(false);
             return;
         }
       } else {
+        if (SSO_MOCK_MODE) {
+            // Do nothing, let the component render the mock login screen
+            setLoading(false);
+            return;
+        }
         // No session and no token, redirect to SSO
         if (SSO_URL && !window.location.pathname.startsWith('/logged-out')) {
              window.location.href = `${SSO_URL}?redirect_url=${encodeURIComponent(window.location.href)}`;
@@ -142,6 +148,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   <p className="text-sm text-muted-foreground mt-4">Redirecting to login...</p>
               </div>
           </div>
+      );
+  }
+
+  if (!user && SSO_MOCK_MODE) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-sans">
+            <div className="p-8 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 text-center space-y-6 max-w-md w-full">
+                <div>
+                    <h2 className="text-2xl font-bold mb-2">Mock Login Mode</h2>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">Select a role to simulate login.</p>
+                </div>
+                
+                <div className="flex flex-col gap-3">
+                    <button 
+                        onClick={() => window.location.href = '/?token=mock-admin-token'}
+                        className="w-full px-4 py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-all active:scale-[0.98] shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                    >
+                        Login as Admin
+                    </button>
+                    <button 
+                        onClick={() => window.location.href = '/?token=mock-user-token'}
+                        className="w-full px-4 py-3 bg-emerald-600 text-white font-medium rounded-xl hover:bg-emerald-700 transition-all active:scale-[0.98] shadow-sm hover:shadow-md flex items-center justify-center gap-2"
+                    >
+                        Login as User
+                    </button>
+                </div>
+
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                    <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                        SSO_MOCK_MODE=true
+                    </p>
+                </div>
+            </div>
+        </div>
       );
   }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Edit2, Trash2, Plus, Check, X, ArrowUp, ArrowDown, Info } from 'lucide-react';
 import { ToastType } from '../../../shared/components/Toast';
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
+import { DynamicIcon } from '../../../shared/components/ui/DynamicIcon';
 
 interface DashboardLink {
   id: string;
@@ -412,7 +413,10 @@ const AdminDashboardLinksTab: React.FC<AdminDashboardLinksTabProps> = ({ addToas
                             className="w-full px-2 py-1 border rounded dark:bg-slate-800 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                           />
                         ) : (
-                          <span className="text-slate-500 font-mono text-xs">{link.icon}</span>
+                          <div className="flex items-center gap-2">
+                            <DynamicIcon name={link.icon} size={16} className="text-slate-400" />
+                            <span className="text-slate-500 font-mono text-xs">{link.icon}</span>
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3">

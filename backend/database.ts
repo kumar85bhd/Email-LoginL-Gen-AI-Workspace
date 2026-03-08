@@ -61,8 +61,33 @@ const defaultData: Data = { users: [], categories: [], workspace_apps: [] };
 export let db: any;
 
 export async function initDb() {
-  db = await JSONFilePreset<Data>(dbPath, defaultData);
-  await db.read();
+  try {
+    db = await JSONFilePreset<Data>(dbPath, defaultData);
+    await db.read();
+  } catch (error) {
+    console.error('Failed to load database:', error);
+    // If the file is corrupted (SyntaxError), try to reset it
+    if (error instanceof SyntaxError || (error as any).message?.includes('Unexpected end of JSON input')) {
+      console.log('Database file appears corrupted. Resetting to defaults...');
+      try {
+        // Backup the corrupted file if it exists
+        if (fs.existsSync(dbPath)) {
+          const backupPath = `${dbPath}.bak.${Date.now()}`;
+          fs.renameSync(dbPath, backupPath);
+          console.log(`Corrupted database backed up to ${backupPath}`);
+        }
+        // Initialize with default data
+        db = await JSONFilePreset<Data>(dbPath, defaultData);
+        await db.write();
+        console.log('Database reset successfully.');
+      } catch (retryError) {
+        console.error('Failed to reset database:', retryError);
+        throw retryError;
+      }
+    } else {
+      throw error;
+    }
+  }
   
   // Ensure default structure if file was empty or corrupted
   if (!db.data) {
@@ -88,7 +113,6 @@ export async function seedDb() {
 
   // Seed Users
   if (db.data.users.length === 0) {
-    // console.log('🌱 Seeding users...');
     const usersJsonPath = path.join(__dirname, '..', 'backend', 'data', 'users.json');
     if (fs.existsSync(usersJsonPath)) {
       const users = JSON.parse(fs.readFileSync(usersJsonPath, 'utf-8'));
@@ -103,13 +127,12 @@ export async function seedDb() {
         });
       }
     } else {
-      // console.log(`⚠️ Users file not found at ${usersJsonPath}`);
+      // Users file not found
     }
   }
 
   // Seed Categories
   if (db.data.categories.length === 0) {
-    // console.log('🌱 Seeding categories...');
     const categories = [
       { name: 'Generative Text', slug: 'gen-text', icon: 'MessageSquare' },
       { name: 'Image Generation', slug: 'gen-image', icon: 'Image' },
@@ -130,7 +153,6 @@ export async function seedDb() {
 
   // Seed Apps
   if (db.data.workspace_apps.length === 0) {
-    // console.log('🌱 Seeding apps...');
     const catMap = Object.fromEntries(db.data.categories.map((c: Category) => [c.slug, c.id]));
 
     const apps = [
