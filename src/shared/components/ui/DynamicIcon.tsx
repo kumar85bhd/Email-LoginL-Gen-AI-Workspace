@@ -9,6 +9,11 @@ interface DynamicIconProps extends Omit<React.ComponentProps<'svg'>, 'ref'> {
 }
 
 export const DynamicIcon: React.FC<DynamicIconProps> = ({ name, size = 24, color = 'currentColor', className, ...props }) => {
+  if (!name) {
+    const FallbackIcon = LucideIcons.Box;
+    return <FallbackIcon size={size} color={color} className={className} {...props} />;
+  }
+
   // Convert string like "file-text" or "FileText" to PascalCase "FileText"
   const formattedName = name
     .split('-')

@@ -60,7 +60,7 @@ export const api = {
       });
       if (res.ok) {
         const data = await res.json();
-        return { data, isLive: true };
+        return { data: Array.isArray(data) ? data : [], isLive: true };
       }
       return { data: [], isLive: false };
     } catch (error) {
@@ -79,7 +79,8 @@ export const api = {
         headers: getAuthHeaders()
       });
       if (res.ok) {
-        return await res.json();
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
       }
       return [];
     } catch (error) {
@@ -110,7 +111,13 @@ export const api = {
    */
   getPreferences: async (): Promise<{ theme: string, favorites: number[] } | null> => {
     const theme = localStorage.getItem('theme') || 'dark';
-    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    let favorites = [];
+    try {
+      favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+      if (!Array.isArray(favorites)) favorites = [];
+    } catch (e) {
+      favorites = [];
+    }
     return { theme, favorites };
   },
 

@@ -29,7 +29,7 @@ export const UserPreferenceProvider: React.FC<{ children: React.ReactNode }> = (
       api.getPreferences().then(prefs => {
         if (prefs) {
           setThemeState(prefs.theme as 'light' | 'dark');
-          setFavoritesState(prefs.favorites);
+          setFavoritesState(Array.isArray(prefs.favorites) ? prefs.favorites : []);
         }
       });
     }

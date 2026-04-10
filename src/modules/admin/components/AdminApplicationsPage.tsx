@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { ToastType } from '../../../shared/components/Toast';
 import WorkspaceAppsTab from './WorkspaceAppsTab';
 import AdminDashboardLinksTab from './AdminDashboardLinksTab';
@@ -9,8 +10,12 @@ interface AdminApplicationsPageProps {
 }
 
 const AdminApplicationsPage: React.FC<AdminApplicationsPageProps> = ({ addToast }) => {
-  const [activeTab, setActiveTab] = useState<'apps' | 'links' | 'categories'>('apps');
+  const location = useLocation();
+  const navigate = useNavigate();
   const [counts, setCounts] = useState({ apps: 0, links: 0, categories: 0 });
+
+  const activeTab = location.pathname.includes('/dashboard-links') ? 'links' : 
+                    location.pathname.includes('/categories') ? 'categories' : 'apps';
 
   useEffect(() => {
     let isMounted = true;
@@ -47,8 +52,8 @@ const AdminApplicationsPage: React.FC<AdminApplicationsPageProps> = ({ addToast 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden flex flex-col h-[calc(100vh-12rem)]">
       <div className="flex border-b border-slate-200 dark:border-slate-700">
-        <button
-          onClick={() => setActiveTab('apps')}
+        <Link
+          to="/admin/applications"
           className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${
             activeTab === 'apps'
               ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
@@ -59,9 +64,9 @@ const AdminApplicationsPage: React.FC<AdminApplicationsPageProps> = ({ addToast 
           <span className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold">
             {counts.apps}
           </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('links')}
+        </Link>
+        <Link
+          to="/admin/dashboard-links"
           className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${
             activeTab === 'links'
               ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
@@ -72,9 +77,9 @@ const AdminApplicationsPage: React.FC<AdminApplicationsPageProps> = ({ addToast 
           <span className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold">
             {counts.links}
           </span>
-        </button>
-        <button
-          onClick={() => setActiveTab('categories')}
+        </Link>
+        <Link
+          to="/admin/categories"
           className={`px-6 py-3 text-sm font-medium transition-colors border-b-2 flex items-center gap-2 ${
             activeTab === 'categories'
               ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400'
@@ -85,7 +90,7 @@ const AdminApplicationsPage: React.FC<AdminApplicationsPageProps> = ({ addToast 
           <span className="bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded-full text-[10px] font-bold">
             {counts.categories}
           </span>
-        </button>
+        </Link>
       </div>
 
       <div className="flex-1 overflow-hidden">

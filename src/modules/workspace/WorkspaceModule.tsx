@@ -104,12 +104,12 @@ const WorkspaceModule: React.FC = () => {
     let result = apps.map(app => ({ ...app, isFavorite: favorites.includes(app.id) }));
     
     // Default sort alphabetically by name
-    result.sort((a, b) => a.name.localeCompare(b.name));
+    result.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(app => 
-        app.name.toLowerCase().includes(q) || app.desc.toLowerCase().includes(q)
+        (app.name || '').toLowerCase().includes(q) || (app.desc || '').toLowerCase().includes(q)
       );
     }
     if (activeFilter === 'favorites') {
@@ -321,8 +321,8 @@ const WorkspaceModule: React.FC = () => {
           </div>
 
           {/* Fixed Bottom-Right Robot */}
-          <div className="fixed bottom-20 right-6 z-40 w-20 h-20 pointer-events-none">
-             <RobotAnimation scale={0.4} color={robotColor} variant={robotVariant} />
+          <div className="fixed bottom-6 right-6 z-40 pointer-events-none drop-shadow-2xl">
+             <RobotAnimation scale={0.35} color={robotColor} variant={robotVariant} />
           </div>
         </div>
       </main>

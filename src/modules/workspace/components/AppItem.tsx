@@ -69,7 +69,7 @@ const AppItem: React.FC<AppItemProps> = ({ app, viewMode, onToggleFav, onOpenDet
         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 shadow-sm bg-gradient-to-br ${catStyles.gradient} text-white`}>
           <DynamicIcon name={app.icon} size={28} />
         </div>
-        <h3 className={`font-semibold text-sm truncate w-full px-2 transition-colors ${catStyles.text}`}>{app.name}</h3>
+        <h3 className={`font-semibold text-2xl truncate w-full px-2 transition-colors ${catStyles.text}`}>{app.name}</h3>
       </motion.div>
     );
   }
@@ -101,7 +101,7 @@ const AppItem: React.FC<AppItemProps> = ({ app, viewMode, onToggleFav, onOpenDet
             <DynamicIcon name={app.icon} size={20} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className={`font-bold text-sm transition-colors tracking-tight truncate ${catStyles.text}`}>
+            <h3 className={`font-bold text-2xl transition-colors tracking-tight truncate ${catStyles.text}`}>
               {app.name}
             </h3>
           </div>
@@ -130,7 +130,7 @@ const AppItem: React.FC<AppItemProps> = ({ app, viewMode, onToggleFav, onOpenDet
         </div>
 
         {app.desc && (
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3 font-sans mb-3">
+          <p className="text-lg text-muted-foreground leading-relaxed line-clamp-3 font-sans mb-3">
             {app.desc}
           </p>
         )}

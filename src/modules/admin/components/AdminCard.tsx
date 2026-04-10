@@ -76,7 +76,7 @@ const AdminCard: React.FC<AdminCardProps> = ({ service }) => {
             <DynamicIcon name={service.icon || service.type || 'Box'} size={20} />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className={`font-bold text-sm transition-colors tracking-tight truncate ${catStyles.text}`}>
+            <h3 className={`font-bold text-2xl transition-colors tracking-tight truncate ${catStyles.text}`}>
               {service.name}
             </h3>
           </div>
@@ -96,7 +96,7 @@ const AdminCard: React.FC<AdminCardProps> = ({ service }) => {
         </div>
 
         {service.description && (
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 font-sans mb-4">
+          <p className="text-lg text-muted-foreground leading-relaxed line-clamp-2 font-sans mb-4">
             {service.description}
           </p>
         )}
@@ -106,7 +106,7 @@ const AdminCard: React.FC<AdminCardProps> = ({ service }) => {
             {metrics.map((m, i) => (
               <div key={i} className="bg-white/40 dark:bg-white/5 backdrop-blur-sm rounded-lg p-2 border border-white/20 dark:border-white/10">
                 <div className="text-[9px] text-muted-foreground uppercase tracking-wider font-bold mb-0.5">{m.label}</div>
-                <div className="text-xs font-bold text-foreground font-mono truncate">{m.value}</div>
+                <div className="text-lg font-bold text-foreground font-mono truncate">{m.value}</div>
               </div>
             ))}
           </div>

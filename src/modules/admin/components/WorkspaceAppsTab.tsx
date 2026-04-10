@@ -51,8 +51,8 @@ const WorkspaceAppsTab: React.FC<WorkspaceAppsTabProps> = ({ addToast }) => {
       const appsData = await appsRes.json();
       const catData = await catRes.json();
       
-      setApps(appsData);
-      setCategories(catData);
+      setApps(Array.isArray(appsData) ? appsData : []);
+      setCategories(Array.isArray(catData) ? catData : []);
     } catch (err: any) {
       setError(err.message);
       addToast('Failed to fetch data', 'error');

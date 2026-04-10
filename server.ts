@@ -443,9 +443,10 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     console.log("📦 Serving production build...");
-    app.use(express.static(path.join(__dirname, "dist")));
-    app.get("*", (req, res) => {
-      res.sendFile(path.join(__dirname, "dist", "index.html"));
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get("*all", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 

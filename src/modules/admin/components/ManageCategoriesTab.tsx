@@ -33,7 +33,7 @@ const ManageCategoriesTab: React.FC<ManageCategoriesTabProps> = ({ addToast, onC
       });
       if (!res.ok) throw new Error('Failed to fetch categories');
       const data = await res.json();
-      setCategories(data);
+      setCategories(Array.isArray(data) ? data : []);
     } catch (err: any) {
       setError(err.message);
       addToast('Failed to fetch categories', 'error');

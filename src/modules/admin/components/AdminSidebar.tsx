@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Home, Server, Database, Activity, Box, Layers, Globe, BarChart } from 'lucide-react';
+import { Home, Server, Database, Activity, Box, Layers, Globe, BarChart, Link as LinkIcon } from 'lucide-react';
 import { Tooltip } from '../../../shared/components/ui/Tooltip';
 import { getCategoryStyles } from '../../../shared/utils/categoryColors';
+import { Link } from 'react-router-dom';
 
 interface AdminSidebarProps {
   activeCategory: string | null;
@@ -70,15 +71,28 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({
             </NavItem>
 
             {isAdmin && (
-              <NavItem
-                  isExpanded={isExpanded}
-                  isActive={activeCategory === 'applications'}
-                  onClick={() => onSelectCategory('applications')}
-                  label="Applications"
-                  categoryName="applications"
-              >
-                  <Layers size={20} />
-              </NavItem>
+              <>
+                <NavItem
+                    isExpanded={isExpanded}
+                    isActive={activeCategory === 'applications'}
+                    onClick={() => onSelectCategory('applications')}
+                    label="Applications"
+                    categoryName="applications"
+                    href="/admin/applications"
+                >
+                    <Layers size={20} />
+                </NavItem>
+                <NavItem
+                    isExpanded={isExpanded}
+                    isActive={activeCategory === 'dashboard-links'}
+                    onClick={() => onSelectCategory('dashboard-links')}
+                    label="Dashboard Links"
+                    categoryName="dashboard-links"
+                    href="/admin/dashboard-links"
+                >
+                    <LinkIcon size={20} />
+                </NavItem>
+              </>
             )}
 
             <div className="my-2 h-px bg-slate-200 dark:bg-slate-700 mx-2" />
@@ -110,36 +124,46 @@ interface NavItemProps {
   onClick: () => void;
   label: string;
   categoryName: string;
+  href?: string;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ children, isExpanded, isActive, onClick, label, categoryName }) => {
+const NavItem: React.FC<NavItemProps> = ({ children, isExpanded, isActive, onClick, label, categoryName, href }) => {
     const colors = getColorConfig(categoryName);
 
-    const itemContent = (
-        <motion.button
-            onClick={onClick}
-            className={`flex items-center w-full h-10 rounded-lg px-3 text-sm font-medium transition-all duration-200 relative focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border ${ 
-                isActive 
-                  ? `${colors.activeBg} ${colors.activeText} ${colors.activeBorder} ${colors.glow}` 
-                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
-            }`}
+    const className = `flex items-center w-full h-10 rounded-lg px-3 text-sm font-medium transition-all duration-200 relative focus:outline-none focus:ring-2 focus:ring-indigo-500/50 border ${ 
+        isActive 
+          ? `${colors.activeBg} ${colors.activeText} ${colors.activeBorder} ${colors.glow}` 
+          : 'border-transparent text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-200'
+    }`;
+
+    const innerContent = (
+      <>
+        {isActive && (
+            <motion.div 
+                layoutId="activeAdminSidebarIndicator" 
+                className={`absolute left-0 top-1 bottom-1 w-1 rounded-r-full ${colors.indicator}`} 
+            />
+        )}
+        {children}
+        <motion.div
+            initial={false}
+            animate={{ opacity: isExpanded ? 1 : 0, width: isExpanded ? 'auto' : 0, marginLeft: isExpanded ? 16 : 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            className="overflow-hidden whitespace-nowrap"
         >
-            {isActive && (
-                <motion.div 
-                    layoutId="activeAdminSidebarIndicator" 
-                    className={`absolute left-0 top-1 bottom-1 w-1 rounded-r-full ${colors.indicator}`} 
-                />
-            )}
-            {children}
-            <motion.div
-                initial={false}
-                animate={{ opacity: isExpanded ? 1 : 0, width: isExpanded ? 'auto' : 0, marginLeft: isExpanded ? 16 : 0 }}
-                transition={{ duration: 0.2, ease: 'easeInOut' }}
-                className="overflow-hidden whitespace-nowrap"
-            >
-                {label}
-            </motion.div>
-        </motion.button>
+            {label}
+        </motion.div>
+      </>
+    );
+
+    const itemContent = href ? (
+      <Link to={href} onClick={onClick} className={className}>
+        {innerContent}
+      </Link>
+    ) : (
+      <motion.button onClick={onClick} className={className}>
+        {innerContent}
+      </motion.button>
     );
 
     return isExpanded ? itemContent : <Tooltip content={label} position="right">{itemContent}</Tooltip>;

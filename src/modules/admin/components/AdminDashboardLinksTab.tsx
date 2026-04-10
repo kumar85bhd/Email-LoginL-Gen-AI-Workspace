@@ -50,8 +50,8 @@ const AdminDashboardLinksTab: React.FC<AdminDashboardLinksTabProps> = ({ addToas
       const linksData = await linksRes.json();
       const catData = await catRes.json();
       
-      setLinks(linksData);
-      setCategories(catData);
+      setLinks(Array.isArray(linksData) ? linksData : []);
+      setCategories(Array.isArray(catData) ? catData : []);
     } catch (err: any) {
       setError(err.message);
       addToast('Failed to fetch data', 'error');

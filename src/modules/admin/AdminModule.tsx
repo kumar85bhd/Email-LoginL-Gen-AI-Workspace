@@ -5,7 +5,7 @@ import AdminDashboardCards from './components/AdminDashboardCards';
 import AdminSidebar from './components/AdminSidebar';
 import AdminApplicationsPage from './components/AdminApplicationsPage';
 import { useAuth } from '../../shared/context/useAuth';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, LogOut, Activity } from 'lucide-react';
 import ToastContainer, { ToastMessage, ToastType } from '../../shared/components/Toast';
 
@@ -17,12 +17,26 @@ import ToastContainer, { ToastMessage, ToastType } from '../../shared/components
 const AdminModule: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [services, setServices] = useState<Service[]>([]);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
   const isAdmin = !!user?.is_admin;
+
+  const activeCategory = useMemo(() => {
+    const path = location.pathname;
+    if (path === '/admin' || path === '/admin/') return null;
+    return path.replace('/admin/', '');
+  }, [location.pathname]);
+
+  const handleSelectCategory = (category: string | null) => {
+    if (category === null) {
+      navigate('/admin');
+    } else {
+      navigate(`/admin/${category}`);
+    }
+  };
 
   const addToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Math.random().toString(36).substring(7);
@@ -53,38 +67,44 @@ const AdminModule: React.FC = () => {
         const initialServices: Service[] = [];
         
         // Add hardcoded config services
-        cfg.categories.forEach(cat => {
-          cat.services.forEach(s => {
-            initialServices.push({
-              id: s.id,
-              name: s.name,
-              category: cat.name,
-              status: HealthStatus.HEALTHY,
-              lastUpdated: new Date().toISOString(),
-              type: s.type,
-              url: s.url,
-              description: s.description,
-              metrics: []
-            });
+        if (Array.isArray(cfg.categories)) {
+          cfg.categories.forEach(cat => {
+            if (Array.isArray(cat.services)) {
+              cat.services.forEach(s => {
+                initialServices.push({
+                  id: s.id,
+                  name: s.name,
+                  category: cat.name,
+                  status: HealthStatus.HEALTHY,
+                  lastUpdated: new Date().toISOString(),
+                  type: s.type,
+                  url: s.url,
+                  description: s.description,
+                  metrics: []
+                });
+              });
+            }
           });
-        });
+        }
 
         // Add dynamic dashboard links as services
-        dashboardLinks.forEach((link: any) => {
-          if (link.is_active) {
-            initialServices.push({
-              id: link.id,
-              name: link.name,
-              category: link.category || 'Uncategorized',
-              status: HealthStatus.ACTIVE,
-              lastUpdated: new Date().toISOString(),
-              type: link.icon?.toLowerCase() || 'link',
-              url: link.url,
-              description: link.description || `Managed link: ${link.name}`,
-              metrics: []
-            });
-          }
-        });
+        if (Array.isArray(dashboardLinks)) {
+          dashboardLinks.forEach((link: any) => {
+            if (link.is_active) {
+              initialServices.push({
+                id: link.id,
+                name: link.name,
+                category: link.category || 'Uncategorized',
+                status: HealthStatus.ACTIVE,
+                lastUpdated: new Date().toISOString(),
+                type: link.icon?.toLowerCase() || 'link',
+                url: link.url,
+                description: link.description || `Managed link: ${link.name}`,
+                metrics: []
+              });
+            }
+          });
+        }
 
         setServices(initialServices);
       } catch (error) {
@@ -122,7 +142,7 @@ const AdminModule: React.FC = () => {
       <AdminSidebar 
         activeCategory={activeCategory}
         categories={categories}
-        onSelectCategory={setActiveCategory}
+        onSelectCategory={handleSelectCategory}
         isAdmin={isAdmin}
       />
 
@@ -178,7 +198,7 @@ const AdminModule: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
-                    {activeCategory === 'applications' ? 'Application Management' : (activeCategory ? activeCategory : 'System Admin Overview')}
+                    {['applications', 'dashboard-links', 'categories'].includes(activeCategory || '') ? 'Application Management' : (activeCategory ? activeCategory : 'System Admin Overview')}
                   </h2>
                   {!activeCategory && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 italic">
@@ -200,7 +220,7 @@ const AdminModule: React.FC = () => {
                 )}
               </div>
 
-              {activeCategory === 'applications' ? (
+              {['applications', 'dashboard-links', 'categories'].includes(activeCategory || '') ? (
                 <AdminApplicationsPage addToast={addToast} />
               ) : (
                 <AdminDashboardCards

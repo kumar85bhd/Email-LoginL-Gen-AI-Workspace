@@ -33,54 +33,62 @@ const RobotAnimation: React.FC<RobotAnimationProps> = ({ scale = 0.8, className 
   
   // Color mapping for different parts
   const getColorStyles = (color: string) => {
-    const styles: Record<string, { aura: string, eye: string, eyeShadow: string, chest: string, beam: string }> = {
+    const styles: Record<string, { aura: string, eye: string, eyeShadow: string, chest: string, beam: string, metal: string }> = {
       'indigo': { 
-        aura: 'bg-indigo-500/10 dark:bg-indigo-500/20', 
+        aura: 'bg-indigo-500/10 dark:bg-indigo-600/20', 
         eye: 'border-cyan-400', 
-        eyeShadow: 'drop-shadow-[0_0_10px_rgba(34,211,238,0.8)]',
+        eyeShadow: 'drop-shadow-[0_0_12px_rgba(34,211,238,0.9)]',
         chest: 'bg-cyan-400',
-        beam: 'bg-cyan-400/30'
+        beam: 'bg-cyan-400/30',
+        metal: 'from-slate-50 via-slate-200 to-slate-400'
       },
       'fuchsia': { 
-        aura: 'bg-fuchsia-500/10 dark:bg-fuchsia-500/20', 
+        aura: 'bg-fuchsia-500/10 dark:bg-fuchsia-600/20', 
         eye: 'border-fuchsia-400', 
-        eyeShadow: 'drop-shadow-[0_0_10px_rgba(232,121,249,0.8)]',
+        eyeShadow: 'drop-shadow-[0_0_12px_rgba(232,121,249,0.9)]',
         chest: 'bg-fuchsia-400',
-        beam: 'bg-fuchsia-400/30'
+        beam: 'bg-fuchsia-400/30',
+        metal: 'from-slate-50 via-slate-200 to-slate-400'
       },
       'emerald': { 
-        aura: 'bg-emerald-500/10 dark:bg-emerald-500/20', 
+        aura: 'bg-emerald-500/10 dark:bg-emerald-600/20', 
         eye: 'border-emerald-400', 
-        eyeShadow: 'drop-shadow-[0_0_10px_rgba(52,211,153,0.8)]',
+        eyeShadow: 'drop-shadow-[0_0_12px_rgba(52,211,153,0.9)]',
         chest: 'bg-emerald-400',
-        beam: 'bg-emerald-400/30'
+        beam: 'bg-emerald-400/30',
+        metal: 'from-slate-50 via-slate-200 to-slate-400'
       },
       'orange': { 
-        aura: 'bg-orange-500/10 dark:bg-orange-500/20', 
+        aura: 'bg-orange-500/10 dark:bg-orange-600/20', 
         eye: 'border-orange-400', 
-        eyeShadow: 'drop-shadow-[0_0_10px_rgba(251,146,60,0.8)]',
+        eyeShadow: 'drop-shadow-[0_0_12px_rgba(251,146,60,0.9)]',
         chest: 'bg-orange-400',
-        beam: 'bg-orange-400/30'
+        beam: 'bg-orange-400/30',
+        metal: 'from-slate-50 via-slate-200 to-slate-400'
       },
       'blue': { 
-        aura: 'bg-blue-500/10 dark:bg-blue-500/20', 
+        aura: 'bg-blue-500/10 dark:bg-blue-600/20', 
         eye: 'border-blue-400', 
-        eyeShadow: 'drop-shadow-[0_0_10px_rgba(96,165,250,0.8)]',
+        eyeShadow: 'drop-shadow-[0_0_12px_rgba(96,165,250,0.9)]',
         chest: 'bg-blue-400',
-        beam: 'bg-blue-400/30'
+        beam: 'bg-blue-400/30',
+        metal: 'from-slate-50 via-slate-200 to-slate-400'
       },
       'pink': { 
-        aura: 'bg-pink-500/10 dark:bg-pink-500/20', 
+        aura: 'bg-pink-500/10 dark:bg-pink-600/20', 
         eye: 'border-pink-400', 
-        eyeShadow: 'drop-shadow-[0_0_10px_rgba(244,114,182,0.8)]',
+        eyeShadow: 'drop-shadow-[0_0_12px_rgba(244,114,182,0.9)]',
         chest: 'bg-pink-400',
-        beam: 'bg-pink-400/30'
+        beam: 'bg-pink-400/30',
+        metal: 'from-slate-50 via-slate-200 to-slate-400'
       },
     };
     return styles[color] || styles['indigo'];
   };
 
   const styles = getColorStyles(color);
+  const baseSize = 320;
+  const containerSize = baseSize * scale;
 
   // Animation Variants
   const getEyeAnimation = () => {
@@ -114,56 +122,81 @@ const RobotAnimation: React.FC<RobotAnimationProps> = ({ scale = 0.8, className 
   };
 
   return (
-    <div className={`hidden md:flex items-center justify-center relative ${className}`}>
+    <motion.div 
+      whileHover={{ scale: 1.05, y: -5 }}
+      className={`hidden md:flex items-center justify-center relative ${className}`}
+      style={{ width: containerSize, height: containerSize }}
+    >
       {/* Glowing Aura */}
       <motion.div 
         animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.4, 0.2] }}
         transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        className={`absolute w-80 h-80 rounded-full blur-[80px] ${styles.aura}`}
+        className={`absolute rounded-full blur-[80px] ${styles.aura}`}
+        style={{ width: containerSize, height: containerSize }}
       />
       
       {/* Robot Composition */}
       <motion.div 
         animate={getBodyAnimation()}
-        className="relative w-80 h-80 flex items-center justify-center"
+        className="relative flex items-center justify-center"
+        style={{ width: containerSize, height: containerSize }}
       >
         {/* Robot Character */}
-        <div className="relative z-10 flex flex-col items-center" style={{ transform: `scale(${scale})` }}>
+        <div className="relative z-10 flex flex-col items-center" style={{ transform: `scale(${scale})`, width: baseSize, height: baseSize, justifyContent: 'center' }}>
           
           {/* Arms */}
-          {/* Left Arm */}
+          {/* Left Arm (Static/Subtle) */}
           <motion.div 
-            animate={{ rotate: [-5, 5, -5] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -left-12 top-40 w-8 h-24 bg-gradient-to-b from-slate-200 to-slate-400 rounded-full shadow-lg origin-top z-0 border-l border-slate-100"
-          />
-          
-          {/* Right Arm (Waving) */}
-          <motion.div 
-            animate={currentPhase === 'idle' ? { rotate: [-40, -60, -40] } : { rotate: [-5, 5, -5] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -right-12 top-40 w-8 h-24 bg-gradient-to-b from-slate-200 to-slate-400 rounded-full shadow-lg origin-top z-0 border-r border-slate-100"
+            animate={{ rotate: [-2, 2, -2] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -left-12 top-40 w-8 h-24 bg-gradient-to-b from-slate-200 via-slate-300 to-slate-400 rounded-full shadow-lg origin-top z-0 border-l border-white/30"
           >
+            {/* Shoulder Joint */}
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-10 h-10 bg-slate-400 rounded-full border border-slate-300 shadow-inner" />
+          </motion.div>
+          
+          {/* Right Arm (Waving - Right Hand Only) */}
+          <motion.div 
+            animate={currentPhase === 'idle' ? { rotate: [-45, -75, -45] } : { rotate: [-5, 5, -5] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -right-12 top-40 w-8 h-24 bg-gradient-to-b from-slate-200 via-slate-300 to-slate-400 rounded-full shadow-lg origin-top z-0 border-r border-white/30"
+          >
+            {/* Shoulder Joint */}
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-10 h-10 bg-slate-400 rounded-full border border-slate-300 shadow-inner" />
+            
             {/* Hand part */}
-            <div className="absolute bottom-0 left-0 w-full h-8 bg-slate-400 rounded-full" />
+            <motion.div 
+              animate={currentPhase === 'idle' ? { rotate: [0, 20, 0] } : { rotate: 0 }}
+              transition={{ duration: 0.6, repeat: Infinity }}
+              className="absolute bottom-0 left-0 w-full h-8 bg-slate-400 rounded-full border-t border-slate-300 shadow-md" 
+            />
           </motion.div>
 
           {/* Head */}
-          <div className="relative w-48 h-36 bg-gradient-to-b from-slate-50 to-slate-300 rounded-[3rem] shadow-[0_20px_40px_-15px_rgba(0,0,0,0.4)] border border-white/50 flex items-center justify-center z-20">
+          <div className="relative w-48 h-36 bg-gradient-to-br from-slate-50 via-slate-200 to-slate-400 rounded-[3rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border border-white/60 flex items-center justify-center z-20">
+            {/* Antenna */}
+            <motion.div 
+              animate={{ rotate: [-5, 5, -5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              className="absolute -top-8 left-1/2 -translate-x-1/2 w-1.5 h-10 bg-slate-400 rounded-full origin-bottom"
+            >
+              <div className={`absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full ${styles.chest} shadow-[0_0_10px_rgba(34,211,238,0.8)]`} />
+            </motion.div>
+
             {/* Face Screen */}
-            <div className="w-[90%] h-[85%] bg-slate-950 rounded-[2.5rem] relative overflow-hidden shadow-inner flex flex-col items-center justify-center border border-slate-800/50">
+            <div className="w-[92%] h-[88%] bg-slate-950 rounded-[2.8rem] relative overflow-hidden shadow-[inset_0_2px_10px_rgba(0,0,0,0.8)] flex flex-col items-center justify-center border border-slate-800/80">
                {/* Screen Gloss */}
-               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[140%] h-1/2 bg-gradient-to-b from-white/10 to-transparent rounded-b-full opacity-40" />
+               <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.15),transparent_70%)]" />
                
                {/* Eyes */}
-               <div className="flex gap-8 mb-4">
+               <div className="flex gap-10 mb-5">
                  <motion.div 
                    animate={getEyeAnimation()}
-                   className={`w-10 h-5 border-t-[6px] rounded-t-full ${styles.eye} ${styles.eyeShadow}`}
+                   className={`w-11 h-6 border-t-[7px] rounded-t-full ${styles.eye} ${styles.eyeShadow}`}
                  />
                  <motion.div 
                    animate={getEyeAnimation()}
-                   className={`w-10 h-5 border-t-[6px] rounded-t-full ${styles.eye} ${styles.eyeShadow}`}
+                   className={`w-11 h-6 border-t-[7px] rounded-t-full ${styles.eye} ${styles.eyeShadow}`}
                  />
                </div>
                
@@ -223,7 +256,7 @@ const RobotAnimation: React.FC<RobotAnimationProps> = ({ scale = 0.8, className 
           </div>
         </div>
       </motion.div>
-    </div>
+    </motion.div>
   );
 };
 
